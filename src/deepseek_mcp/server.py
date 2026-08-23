@@ -97,7 +97,9 @@ class WorkerApp:
         roots = getattr(result, "roots", None) or []
         if len(roots) != 1:
             return None
-        uri = getattr(roots[0], "uri", "")
+        # mcp.types.Root.uri is validated as pydantic FileUrl, which is not a
+        # str subclass; urlparse calls .decode() on non-str input. Coerce first.
+        uri = str(getattr(roots[0], "uri", ""))
         parsed = urlparse(uri)
         if parsed.scheme != "file":
             return None

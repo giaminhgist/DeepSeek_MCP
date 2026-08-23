@@ -24,17 +24,23 @@ from deepseek_mcp.tools.usage import DeepSeekUsageInput, usage_report
 from deepseek_mcp.usage.tracker import UsageTracker, new_run_id
 
 _SERVER_INSTRUCTIONS = """\
-deepseek-worker delegates read-heavy repository analysis to a DeepSeek worker
-over its Anthropic-compatible API. Tools:
-- deepseek_task: repo exploration, architecture tracing, search/summarization,
-  evidence collection. Best for large-context read-heavy work.
+deepseek-worker delegates high-context repository execution to a DeepSeek
+worker over its Anthropic-compatible API. Tools:
+- deepseek_task: repository exploration, architecture tracing, evidence
+  collection, debugging, and — when write/Bash tools are enabled — bounded
+  implementation, targeted tests, and status/diff inspection.
 - deepseek_review: first-pass review of working/staged/head diffs or named
   files, with severity/confidence findings and path:line evidence.
 - deepseek_usage: process/last-run token usage and configured budgets. Free.
 
-DeepSeek output is ADVISORY — Claude owns planning, edits, and final review.
-Every worker response ends with a DeepSeek token usage footer. The worker's
-filesystem/shell toolset is bounded by allowed roots and the config YAML."""
+DeepSeek should perform most repository reading, implementation, and targeted
+test execution. Its output remains ADVISORY: Claude owns planning, high-value
+decisions, selective verification, approval, and the final answer.
+
+Every worker response ends with a DeepSeek token usage footer. Repository and
+filesystem tools are guarded by allowed roots and deny rules. fs_bash has a
+validated working directory and bounded timeout/output, but is not a complete
+filesystem sandbox."""
 
 _DETAIL_VALUES = "brief | normal | detailed"
 _REVIEW_SCOPE_VALUES = "working | staged | head | paths"
@@ -169,8 +175,12 @@ def create_app(
             Field(
                 min_length=1,
                 max_length=20000,
-                description="The read-heavy task to delegate, e.g. map an auth "
-                "flow or find affected call sites. Be bounded and testable.",
+                description=(
+                              "The repository task to delegate. For code changes, request the "
+                              "complete loop: inspect, implement, write/update targeted tests, run "
+                              "checks, inspect status/diff, and report evidence. Keep the task "
+                              "bounded, recoverable, and testable."
+                          ),
             ),
         ],
         focus_paths: Annotated[

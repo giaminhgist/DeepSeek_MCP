@@ -1,4 +1,4 @@
-"""``deepseek_task`` — delegate a read-heavy analysis task to DeepSeek."""
+"""``deepseek_task`` — delegate repository analysis and bounded execution to DeepSeek."""
 
 from __future__ import annotations
 

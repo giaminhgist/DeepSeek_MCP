@@ -11,6 +11,7 @@ import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.server.fastmcp.exceptions import ToolError
+from mcp.types import ListRootsResult
 
 from deepseek_mcp.deepseek.client import ToolCallRequest
 from deepseek_mcp.server import create_app
@@ -148,6 +149,32 @@ async def test_invalid_output_detail_rejected(app) -> None:
 async def test_repo_root_arg_disabled_by_default(app, tmp_path: Path) -> None:
     with pytest.raises(ToolError, match="allow_repo_root_argument"):
         await app.mcp.call_tool("deepseek_task", {"task": "x", "repo_root": str(tmp_path)})
+
+
+async def test_mcp_roots_file_url_parsed_as_str(app, tmp_path: Path) -> None:
+    """Client roots come back as pydantic FileUrl; urlparse must not choke.
+
+    Regression test: urlparse(FileUrl) raised AttributeError ("'FileUrl'
+    object has no attribute 'decode'") because pydantic FileUrl is not a
+    str subclass. The root must be coerced to str before parsing.
+    """
+    target = tmp_path / "client_root"
+    target.mkdir()
+    # model_validate mirrors how the mcp SDK deserializes a roots/list
+    # response (Root.uri is typed FileUrl).
+    roots_result = ListRootsResult.model_validate(
+        {"roots": [{"uri": f"file://{target}", "name": "client root"}]}
+    )
+
+    class FakeSession:
+        async def list_roots(self):
+            return roots_result
+
+    class FakeCtx:
+        session = FakeSession()
+
+    policy = await app.resolve_policy(None, FakeCtx())  # type: ignore[arg-type]
+    assert policy.repo_root == target.resolve()
 
 
 async def test_budget_stop_result_ends_with_footer(

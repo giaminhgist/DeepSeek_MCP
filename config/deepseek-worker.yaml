@@ -1,0 +1,95 @@
+version: 1
+
+provider:
+  api_format: anthropic
+  base_url: "https://api.deepseek.com/anthropic"
+  api_key_env: "DEEPSEEK_API_KEY"
+  request_timeout_ms: 120000
+
+model:
+  name: "deepseek-v4-pro"
+  context_window_tokens: 1000000
+  max_output_tokens_per_call: 32768
+  temperature: 0.2
+
+worker:
+  max_agent_iterations: 24
+  max_run_seconds: 300
+  default_output_detail: "normal"
+
+# Internal worker toolset. Per project-owner decision (2026-08-23), the worker
+# tool loop includes file tools beyond the repository and write/shell tools.
+tools:
+  # Register fs_read / fs_glob / fs_grep / repo tools for the worker.
+  allow_file_tools: true
+  # Register fs_write / fs_edit / fs_notebook_edit for the worker.
+  allow_writes: true
+  # Register fs_bash (arbitrary commands in bounded subprocesses) for the worker.
+  allow_bash: true
+  # Additional absolute roots the fs_* tools may access (read and, if enabled,
+  # write). The repository root is always included. Empty = repo root only.
+  extra_allowed_roots: []
+  max_bash_output_chars: 24000
+  bash_timeout_ms: 60000
+
+compaction:
+  enabled: true
+  max_tool_result_chars: 24000
+  worker_context_soft_limit_tokens: 320000
+  worker_context_hard_limit_tokens: 520000
+  preserve_recent_messages: 8
+  final_target_chars:
+    brief: 4000
+    normal: 8000
+    detailed: 12000
+  final_hard_limit_chars: 16000
+  max_findings:
+    brief: 8
+    normal: 15
+    detailed: 24
+  max_evidence_items:
+    brief: 12
+    normal: 24
+    detailed: 40
+  include_raw_transcript: false
+
+repository:
+  root_env: "DEEPSEEK_REPO_ROOT"
+  max_file_bytes: 1048576
+  max_read_lines: 12000
+  max_search_matches: 500
+  max_list_entries: 5000
+  max_git_diff_bytes: 500000
+  allow_repo_root_argument: false
+  respect_gitignore: true
+  deny_globs:
+    - "**/.env"
+    - "**/.env.*"
+    - "**/*.pem"
+    - "**/*.key"
+    - "**/*credentials*"
+    - "**/*secret*"
+    - "**/.git/**"
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+
+budget:
+  max_api_calls_per_run: 24
+  max_input_tokens_per_run: 600000
+  max_output_tokens_per_run: 60000
+  max_total_tokens_per_run: 660000
+  max_estimated_cost_usd_per_run: 0.35
+  on_limit: "stop"
+
+pricing:
+  currency: "USD"
+  source: "https://api-docs.deepseek.com/quick_start/pricing/"
+  snapshot_date: "2026-08-22"
+  per_million_tokens:
+    input_cache_hit: 0.003625
+    input_cache_miss: 0.435
+    output: 0.87
+
+logging:
+  level: "info"

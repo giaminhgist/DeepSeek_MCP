@@ -169,15 +169,14 @@ Example content (matches the built paths):
 
 ### Option B — `claude mcp add`
 
-```bash
 claude mcp add deepseek-worker \
+  --scope user \
   --env DEEPSEEK_API_KEY \
-  --env DEEPSEEK_REPO_ROOT=/path/to/your/repo \
   --env DEEPSEEK_CONFIG=/path/to/DeepSeek_MCP/config/deepseek-worker.yaml \
   -- uv run --directory /path/to/DeepSeek_MCP deepseek-mcp
-```
-
-(`--env DEEPSEEK_API_KEY` without a value passes the variable through from your shell.)
+  
+(--env DEEPSEEK_API_KEY without a value passes the variable through from your shell.) 
+(--env DEEPSEEK_REPO_ROOT=/path/to/your/repo  for specific project)
 
 ### Verify registration
 

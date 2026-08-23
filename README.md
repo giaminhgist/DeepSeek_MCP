@@ -178,7 +178,7 @@ claude mcp add deepseek-worker \
 ```
 
 (`--env DEEPSEEK_API_KEY` without a value passes the variable through from your shell.)
-('--env DEEPSEEK_REPO_ROOT=/path/to/your/repo \' for specific project)
+(--env DEEPSEEK_REPO_ROOT=/path/to/your/repo \ for specific project)
 ### Verify registration
 
 ```bash
